@@ -6,7 +6,11 @@ from datetime import datetime
 
 def limpar_texto(texto):
 
-    texto = re.sub(r"\s+", " ", texto)
+    texto = re.sub(
+        r"\s+",
+        " ",
+        texto
+    )
 
     return texto.strip()
 
@@ -29,6 +33,7 @@ def extrair_periodo(texto):
     if match:
 
         data_inicial = match.group(1)
+
         data_final = match.group(2)
 
         data = datetime.strptime(
@@ -37,14 +42,25 @@ def extrair_periodo(texto):
         )
 
         return {
-            "data_inicial": data_inicial,
-            "data_final": data_final,
-            "competencia": data.strftime("%Y-%m"),
-            "ano": data.year,
-            "mes": data.month
+
+            "data_inicial":
+            data_inicial,
+
+            "data_final":
+            data_final,
+
+            "competencia":
+            data.strftime("%Y-%m"),
+
+            "ano":
+            data.year,
+
+            "mes":
+            data.month
         }
 
     return {
+
         "data_inicial": None,
         "data_final": None,
         "competencia": None,
