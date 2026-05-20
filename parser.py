@@ -3,14 +3,12 @@
 import pdfplumber
 import pandas as pd
 import re
-import logging
+
 from utils import (
     limpar_texto,
     converter_moeda,
     extrair_periodo
 )
-
-logging.basicConfig(level=logging.INFO)
 
 PADRAO_ITEM = re.compile(
     r"""
@@ -41,10 +39,13 @@ def remover_linhas_invalidas(texto):
         ignorar = False
 
         for padrao in REMOVER:
+
             if re.search(padrao, linha):
+
                 ignorar = True
 
         if not ignorar:
+
             linhas_validas.append(linha)
 
     return linhas_validas
@@ -63,15 +64,19 @@ def reconstruir_registros(linhas):
         if re.match(r"^[A-Z0-9\-]+\s+\d+", linha):
 
             if buffer:
+
                 registros.append(buffer)
 
             buffer = linha
 
         else:
+
             buffer += " " + linha
 
         if "R$" in linha:
+
             registros.append(buffer)
+
             buffer = ""
 
     return registros
@@ -79,7 +84,7 @@ def reconstruir_registros(linhas):
 
 def processar_pdf(caminho_pdf):
 
-    registros_extraidos = []
+    dados = []
 
     with pdfplumber.open(caminho_pdf) as pdf:
 
@@ -90,6 +95,7 @@ def processar_pdf(caminho_pdf):
             texto = pagina.extract_text()
 
             if texto:
+
                 texto_completo += "\n" + texto
 
         periodo = extrair_periodo(texto_completo)
@@ -104,32 +110,53 @@ def processar_pdf(caminho_pdf):
 
             if match:
 
-                try:
+                item = match.groupdict()
 
-                    dados = match.groupdict()
+                valor = converter_moeda(
+                    item["valor"]
+                )
 
-                    valor = converter_moeda(dados["valor"])
+                quantidade = float(
+                    item["quantidade"]
+                )
 
-                    quantidade = float(dados["quantidade"])
+                dados.append({
 
-                    custo_unitario = valor / quantidade
+                    "Competencia":
+                    periodo["competencia"],
 
-                    registros_extraidos.append({
-                        "Competencia": periodo["competencia"],
-                        "Ano": periodo["ano"],
-                        "Mes": periodo["mes"],
-                        "Data_Inicial": periodo["data_inicial"],
-                        "Data_Final": periodo["data_final"],
-                        "Ficha": dados["ficha"],
-                        "Codigo": dados["codigo"],
-                        "Medicamento": dados["descricao"],
-                        "Unidade": dados["unidade"],
-                        "Quantidade": quantidade,
-                        "Valor_Total": valor,
-                        "Custo_Unitario": custo_unitario
-                    })
+                    "Ano":
+                    periodo["ano"],
 
-                except Exception as e:
-                    logging.error(f"Erro ao processar: {registro}")
+                    "Mes":
+                    periodo["mes"],
 
-    return pd.DataFrame(registros_extraidos)
+                    "Data_Inicial":
+                    periodo["data_inicial"],
+
+                    "Data_Final":
+                    periodo["data_final"],
+
+                    "Ficha":
+                    item["ficha"],
+
+                    "Codigo":
+                    item["codigo"],
+
+                    "Medicamento":
+                    item["descricao"],
+
+                    "Unidade":
+                    item["unidade"],
+
+                    "Quantidade":
+                    quantidade,
+
+                    "Valor_Total":
+                    valor,
+
+                    "Custo_Unitario":
+                    round(valor / quantidade, 2)
+                })
+
+    return pd.DataFrame(dados)
