@@ -40,13 +40,55 @@ def calcular_curva_abc(df):
 
 def gerar_indicadores(df):
 
-    return {
-        "valor_total": df["Valor_Total"].sum(),
-        "quantidade_total": df["Quantidade"].sum(),
-        "medicamentos": df["Medicamento"].nunique(),
-        "classe_a": (
-            df[df["Classe_ABC"] == "A"]
-            ["Medicamento"]
-            .nunique()
+    return pd.DataFrame({
+
+        "Indicador": [
+
+            "Valor Total",
+            "Quantidade Total",
+            "Medicamentos",
+            "Custo Médio"
+
+        ],
+
+        "Valor": [
+
+            df["Valor_Total"].sum(),
+
+            df["Quantidade"].sum(),
+
+            df["Medicamento"].nunique(),
+
+            df["Custo_Unitario"].mean()
+        ]
+    })
+
+
+def top_custo(df):
+
+    return (
+        df.groupby("Medicamento")
+        ["Valor_Total"]
+        .sum()
+        .reset_index()
+        .sort_values(
+            "Valor_Total",
+            ascending=False
         )
-    }
+        .head(10)
+    )
+
+
+def top_consumo(df):
+
+    return (
+        df.groupby("Medicamento")
+        ["Quantidade"]
+        .sum()
+        .reset_index()
+        .sort_values(
+            "Quantidade",
+            ascending=False
+        )
+        .head(10)
+    )
