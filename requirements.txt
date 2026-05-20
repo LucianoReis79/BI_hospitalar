@@ -5,8 +5,7 @@ pandas
 numpy
 plotly
 pdfplumber
+gspread
+google-auth
 openpyxl
 xlsxwriter
-pytesseract
-pdf2image
-sqlite3
