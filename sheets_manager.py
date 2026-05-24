@@ -157,17 +157,13 @@ def ler_base_historica():
 
         if coluna in df.columns:
 
+            
+
             df[coluna] = (
 
                 df[coluna]
 
                 .astype(str)
-
-                .str.replace(
-                    ".",
-                    "",
-                    regex=False
-                )
 
                 .str.replace(
                     ",",
