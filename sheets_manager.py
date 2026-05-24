@@ -1,12 +1,17 @@
 # sheets_manager.py
 
+import streamlit as st
+
 import pandas as pd
 import gspread
 
 from google.oauth2.service_account import Credentials
 
 
+# =========================
 # CONFIGURAÇÃO GOOGLE
+# =========================
+
 SCOPES = [
 
     "https://www.googleapis.com/auth/spreadsheets",
@@ -15,9 +20,9 @@ SCOPES = [
 
 ]
 
-CREDS = Credentials.from_service_account_file(
+CREDS = Credentials.from_service_account_info(
 
-    "credentials.json",
+    st.secrets["gcp_service_account"],
 
     scopes=SCOPES
 
@@ -30,13 +35,19 @@ SPREADSHEET = client.open(
 )
 
 
+# =========================
 # CONECTA ABA
+# =========================
+
 def conectar_planilha(nome_aba):
 
     return SPREADSHEET.worksheet(nome_aba)
 
 
+# =========================
 # LIMPA ABA
+# =========================
+
 def limpar_aba(nome_aba):
 
     sheet = conectar_planilha(nome_aba)
@@ -44,7 +55,10 @@ def limpar_aba(nome_aba):
     sheet.clear()
 
 
+# =========================
 # FORMATA PADRÃO BR
+# =========================
+
 def formatar_brasileiro(df):
 
     df = df.copy()
@@ -67,8 +81,11 @@ def formatar_brasileiro(df):
             df[coluna] = (
 
                 pd.to_numeric(
+
                     df[coluna],
+
                     errors="coerce"
+
                 )
 
                 .fillna(0)
@@ -88,7 +105,10 @@ def formatar_brasileiro(df):
     return df
 
 
+# =========================
 # SALVA DATAFRAME
+# =========================
+
 def salvar_dataframe(df, aba):
 
     sheet = conectar_planilha(aba)
@@ -103,13 +123,18 @@ def salvar_dataframe(df, aba):
 
     # DADOS
     sheet.append_rows(
+
         df.astype(str)
         .values
         .tolist()
+
     )
 
 
+# =========================
 # REGISTRA IMPORTAÇÃO
+# =========================
+
 def registrar_importacao(nome_arquivo):
 
     try:
@@ -127,7 +152,10 @@ def registrar_importacao(nome_arquivo):
         pass
 
 
+# =========================
 # LER BASE HISTÓRICA
+# =========================
+
 def ler_base_historica():
 
     sheet = conectar_planilha(
@@ -157,13 +185,17 @@ def ler_base_historica():
 
         if coluna in df.columns:
 
-            
-
             df[coluna] = (
 
                 df[coluna]
 
                 .astype(str)
+
+                .str.replace(
+                    ".",
+                    "",
+                    regex=False
+                )
 
                 .str.replace(
                     ",",
@@ -184,7 +216,10 @@ def ler_base_historica():
     return df
 
 
+# =========================
 # SUBSTITUI ABA
+# =========================
+
 def substituir_dataframe(df, aba):
 
     sheet = conectar_planilha(aba)
@@ -202,7 +237,9 @@ def substituir_dataframe(df, aba):
 
     # DADOS
     sheet.append_rows(
+
         df.astype(str)
         .values
         .tolist()
+
     )
