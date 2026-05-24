@@ -20,8 +20,6 @@ SCOPES = [
 
 ]
 
-import json
-
 CREDS = Credentials.from_service_account_info(
 
     st.secrets["gcp_service_account"],
@@ -179,7 +177,8 @@ def ler_base_historica():
 
         "Quantidade",
         "Valor_Total",
-        "Custo_Unitario"
+        "Custo_Unitario",
+        "Consumo_Medio_Mensal"
 
     ]
 
