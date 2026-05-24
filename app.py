@@ -12,9 +12,13 @@ from analytics import (
 )
 
 from sheets_manager import (
-    salvar_dataframe,
-    limpar_aba,
+
+    ler_base_historica,
+
+    substituir_dataframe,
+
     registrar_importacao
+
 )
 
 
@@ -40,7 +44,7 @@ uploaded_files = st.file_uploader(
 # PROCESSAMENTO
 if uploaded_files:
 
-    todos_dados = []
+    novos_dados = []
 
     progresso = st.progress(0)
 
@@ -52,7 +56,7 @@ if uploaded_files:
 
             try:
 
-                # ARQUIVO TEMPORÁRIO
+                # ARQUIVO TEMP
                 with tempfile.NamedTemporaryFile(
                     delete=False,
                     suffix=".pdf"
@@ -71,11 +75,11 @@ if uploaded_files:
 
                 os.remove(caminho_pdf)
 
+                # VALIDA
                 if not df.empty:
 
-                    todos_dados.append(df)
+                    novos_dados.append(df)
 
-                    # REGISTRA IMPORTAÇÃO
                     registrar_importacao(
                         arquivo.name
                     )
@@ -106,21 +110,45 @@ if uploaded_files:
                 / len(uploaded_files)
             )
 
-    # CONSOLIDA
-    if todos_dados:
+    # PROCESSA HISTÓRICO
+    if novos_dados:
 
-        df_final = pd.concat(
-            todos_dados,
+        # NOVOS PDFs
+        df_novos = pd.concat(
+            novos_dados,
             ignore_index=True
         )
 
-        # REMOVE DUPLICIDADES
+        # HISTÓRICO ANTIGO
+        df_historico = (
+            ler_base_historica()
+        )
+
+        # CONCATENA
+        if not df_historico.empty:
+
+            df_final = pd.concat(
+
+                [
+                    df_historico,
+                    df_novos
+                ],
+
+                ignore_index=True
+
+            )
+
+        else:
+
+            df_final = df_novos
+
+        # REMOVE DUPLICIDADE
         df_final = (
             df_final
             .drop_duplicates()
         )
 
-        # ARREDONDAMENTO
+        # NUMÉRICOS
         colunas_numericas = [
 
             "Quantidade",
@@ -134,8 +162,17 @@ if uploaded_files:
             if coluna in df_final.columns:
 
                 df_final[coluna] = (
-                    df_final[coluna]
-                    .astype(float)
+
+                    pd.to_numeric(
+
+                        df_final[coluna],
+
+                        errors="coerce"
+
+                    )
+
+                    .fillna(0)
+
                     .round(2)
                 )
 
@@ -146,24 +183,25 @@ if uploaded_files:
 
         try:
 
-            # LIMPA ABAS
-            limpar_aba("Base_Historica")
-            limpar_aba("Curva_ABC")
-
-            # SALVA NOVAMENTE
-            salvar_dataframe(
+            # SUBSTITUI BASE
+            substituir_dataframe(
                 df_final,
                 "Base_Historica"
             )
 
-            salvar_dataframe(
+            # SUBSTITUI ABC
+            substituir_dataframe(
                 df_abc,
                 "Curva_ABC"
             )
 
             st.success(
-                "Dados enviados para "
-                "Google Sheets!"
+                "Base histórica atualizada!"
+            )
+
+            st.write(
+                f"Total histórico: "
+                f"{len(df_final)} linhas"
             )
 
         except Exception as e:

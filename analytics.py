@@ -31,6 +31,9 @@ def calcular_curva_abc(df):
         abc["Quantidade"] / meses
     )
 
+    # MESES UTILIZADOS
+    abc["Meses_CMM"] = meses
+
     # CUSTO UNITÁRIO
     abc["Custo_Unitario"] = (
         abc["Valor_Total"]
@@ -128,23 +131,25 @@ def calcular_curva_abc(df):
     # COLUNAS FINAIS
     abc = abc[[
 
-        "Ranking",
+            "Ranking",
 
-        "Medicamento",
+            "Medicamento",
 
-        "Quantidade",
+            "Quantidade",
 
-        "Consumo_Medio_Mensal",
+            "Meses_CMM",
 
-        "Valor_Total",
+            "Consumo_Medio_Mensal",
 
-        "Custo_Unitario",
+            "Valor_Total",
 
-        "Percentual_Formatado",
+            "Custo_Unitario",
 
-        "Percentual_Acumulado_Formatado",
+            "Percentual_Formatado",
 
-        "Classe_Formatada"
+            "Percentual_Acumulado_Formatado",
+
+            "Classe_Formatada"
 
     ]]
 
