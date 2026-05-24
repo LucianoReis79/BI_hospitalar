@@ -20,6 +20,8 @@ SCOPES = [
 
 ]
 
+import json
+
 CREDS = Credentials.from_service_account_info(
 
     st.secrets["gcp_service_account"],
