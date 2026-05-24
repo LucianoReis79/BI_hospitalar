@@ -4,22 +4,31 @@ import streamlit as st
 import plotly.express as px
 
 
-def exibir_dashboard(
-    df,
-    indicadores,
-    df_abc
-):
+def formatar_brl(valor):
 
+    return (
+        f"{valor:,.2f}"
+        .replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+
+def exibir_dashboard(df, df_abc):
+
+    # KPIs
     col1, col2, col3 = st.columns(3)
 
     col1.metric(
         "Valor Total",
-        f'R$ {df["Valor_Total"].sum():,.2f}'
+        f'R$ {formatar_brl(df["Valor_Total"].sum())}'
     )
 
     col2.metric(
-        "Quantidade",
-        f'{df["Quantidade"].sum():,.0f}'
+        "Quantidade Total",
+        formatar_brl(
+            df["Quantidade"].sum()
+        )
     )
 
     col3.metric(
@@ -27,39 +36,29 @@ def exibir_dashboard(
         df["Medicamento"].nunique()
     )
 
-    st.subheader("Top 10 Custo")
+    # CURVA ABC
+    st.subheader("Curva ABC")
 
-    top10 = (
-        df.groupby("Medicamento")
-        ["Valor_Total"]
-        .sum()
-        .reset_index()
-        .sort_values(
-            "Valor_Total",
-            ascending=False
-        )
-        .head(10)
+    fig = px.line(
+        df_abc,
+        x="Ranking",
+        y="Percentual_Acumulado",
+        hover_data=[
+            "Medicamento",
+            "Classe_ABC"
+        ]
     )
 
-    fig = px.bar(
-        top10,
-        x="Medicamento",
-        y="Valor_Total"
+    fig.update_traces(
+        mode="lines"
+    )
+
+    fig.update_layout(
+        xaxis_title="Ranking",
+        yaxis_title="% Acumulado"
     )
 
     st.plotly_chart(
         fig,
-        use_container_width=True
-    )
-
-    st.subheader("Curva ABC")
-
-    fig2 = px.line(
-        df_abc,
-        y="Percentual_Acumulado"
-    )
-
-    st.plotly_chart(
-        fig2,
         use_container_width=True
     )

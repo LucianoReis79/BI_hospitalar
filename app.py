@@ -6,38 +6,38 @@ import tempfile
 import os
 
 from parser import processar_pdf
+
 from analytics import (
-    calcular_curva_abc,
-    gerar_indicadores,
-    top_custo,
-    top_consumo
+    calcular_curva_abc
 )
 
 from sheets_manager import (
-    conectar_planilha,
-    salvar_base_historica,
-    salvar_curva_abc,
-    salvar_indicadores,
-    salvar_top_custo,
-    salvar_top_consumo,
-    verificar_importacao
+    salvar_dataframe,
+    limpar_aba,
+    registrar_importacao
 )
 
-from dashboard import exibir_dashboard
 
+# CONFIGURAÇÃO
 st.set_page_config(
     page_title="Inteligência Farmacêutica Hospitalar",
     layout="wide"
 )
 
-st.title("Inteligência Farmacêutica Hospitalar")
+st.title(
+    "Inteligência Farmacêutica Hospitalar"
+)
 
+
+# UPLOAD PDFs
 uploaded_files = st.file_uploader(
     "Upload dos PDFs",
     type=["pdf"],
     accept_multiple_files=True
 )
 
+
+# PROCESSAMENTO
 if uploaded_files:
 
     todos_dados = []
@@ -46,35 +46,67 @@ if uploaded_files:
 
     for i, arquivo in enumerate(uploaded_files):
 
-        with st.spinner(f"Processando {arquivo.name}..."):
+        with st.spinner(
+            f"Processando {arquivo.name}..."
+        ):
 
-            if verificar_importacao(arquivo.name):
+            try:
 
-                st.warning(
-                    f"{arquivo.name} já importado."
+                # ARQUIVO TEMPORÁRIO
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=".pdf"
+                ) as tmp:
+
+                    tmp.write(
+                        arquivo.read()
+                    )
+
+                    caminho_pdf = tmp.name
+
+                # PROCESSA PDF
+                df = processar_pdf(
+                    caminho_pdf
                 )
 
-                continue
+                os.remove(caminho_pdf)
 
-            with tempfile.NamedTemporaryFile(
-                delete=False,
-                suffix=".pdf"
-            ) as tmp:
+                if not df.empty:
 
-                tmp.write(arquivo.read())
+                    todos_dados.append(df)
 
-                caminho_pdf = tmp.name
+                    # REGISTRA IMPORTAÇÃO
+                    registrar_importacao(
+                        arquivo.name
+                    )
 
-            df = processar_pdf(caminho_pdf)
+                    st.success(
+                        f"{arquivo.name} → "
+                        f"{len(df)} linhas"
+                    )
 
-            todos_dados.append(df)
+                else:
 
-            os.remove(caminho_pdf)
+                    st.warning(
+                        f"Nenhum dado encontrado "
+                        f"em {arquivo.name}"
+                    )
+
+            except Exception as e:
+
+                st.error(
+                    f"Erro ao processar "
+                    f"{arquivo.name}"
+                )
+
+                st.exception(e)
 
             progresso.progress(
-                (i + 1) / len(uploaded_files)
+                (i + 1)
+                / len(uploaded_files)
             )
 
+    # CONSOLIDA
     if todos_dados:
 
         df_final = pd.concat(
@@ -82,28 +114,63 @@ if uploaded_files:
             ignore_index=True
         )
 
-        df_abc = calcular_curva_abc(df_final)
-
-        indicadores = gerar_indicadores(df_final)
-
-        df_top_custo = top_custo(df_final)
-
-        df_top_consumo = top_consumo(df_final)
-
-        salvar_base_historica(df_final)
-
-        salvar_curva_abc(df_abc)
-
-        salvar_indicadores(indicadores)
-
-        salvar_top_custo(df_top_custo)
-
-        salvar_top_consumo(df_top_consumo)
-
-        st.success("Dados enviados para Google Sheets!")
-
-        exibir_dashboard(
-            df_final,
-            indicadores,
-            df_abc
+        # REMOVE DUPLICIDADES
+        df_final = (
+            df_final
+            .drop_duplicates()
         )
+
+        # ARREDONDAMENTO
+        colunas_numericas = [
+
+            "Quantidade",
+            "Valor_Total",
+            "Custo_Unitario"
+
+        ]
+
+        for coluna in colunas_numericas:
+
+            if coluna in df_final.columns:
+
+                df_final[coluna] = (
+                    df_final[coluna]
+                    .astype(float)
+                    .round(2)
+                )
+
+        # CURVA ABC
+        df_abc = calcular_curva_abc(
+            df_final
+        )
+
+        try:
+
+            # LIMPA ABAS
+            limpar_aba("Base_Historica")
+            limpar_aba("Curva_ABC")
+
+            # SALVA NOVAMENTE
+            salvar_dataframe(
+                df_final,
+                "Base_Historica"
+            )
+
+            salvar_dataframe(
+                df_abc,
+                "Curva_ABC"
+            )
+
+            st.success(
+                "Dados enviados para "
+                "Google Sheets!"
+            )
+
+        except Exception as e:
+
+            st.error(
+                "Erro ao salvar "
+                "na Google Sheets"
+            )
+
+            st.exception(e)

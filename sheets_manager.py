@@ -1,9 +1,9 @@
 # sheets_manager.py
 
 import gspread
-import pandas as pd
 
 from google.oauth2.service_account import Credentials
+
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -22,72 +22,73 @@ SPREADSHEET = client.open(
 )
 
 
+# CONECTA ABA
 def conectar_planilha(nome_aba):
 
     return SPREADSHEET.worksheet(nome_aba)
 
 
+# LIMPA ABA
+def limpar_aba(nome_aba):
+
+    sheet = conectar_planilha(nome_aba)
+
+    sheet.clear()
+
+
+# FORMATA BR
+def formatar_brasileiro(df):
+
+    df = df.copy()
+
+    for coluna in df.columns:
+
+        if str(df[coluna].dtype) in [
+            "float64",
+            "int64"
+        ]:
+
+            df[coluna] = (
+                df[coluna]
+                .map(
+                    lambda x:
+                    f"{x:,.2f}"
+                    .replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                )
+            )
+
+    return df
+
+
+# SALVA DATAFRAME
 def salvar_dataframe(df, aba):
 
     sheet = conectar_planilha(aba)
 
-    valores = df.astype(str).values.tolist()
+    df = formatar_brasileiro(df)
 
-    sheet.append_rows(valores)
+    # CABEÇALHO
+    sheet.append_row(
+        df.columns.tolist()
+    )
 
-
-def salvar_base_historica(df):
-
-    salvar_dataframe(
-        df,
-        "Base_Historica"
+    # DADOS
+    sheet.append_rows(
+        df.astype(str)
+        .values
+        .tolist()
     )
 
 
-def salvar_curva_abc(df):
-
-    salvar_dataframe(
-        df,
-        "Curva_ABC"
-    )
-
-
-def salvar_indicadores(df):
-
-    salvar_dataframe(
-        df,
-        "Indicadores"
-    )
-
-
-def salvar_top_custo(df):
-
-    salvar_dataframe(
-        df,
-        "Top_Custo"
-    )
-
-
-def salvar_top_consumo(df):
-
-    salvar_dataframe(
-        df,
-        "Top_Consumo"
-    )
-
-
-def verificar_importacao(nome_arquivo):
+# REGISTRA IMPORTAÇÃO
+def registrar_importacao(nome_arquivo):
 
     sheet = conectar_planilha(
         "Importacoes"
     )
 
-    registros = sheet.col_values(1)
-
-    if nome_arquivo in registros:
-
-        return True
-
-    sheet.append_row([nome_arquivo])
-
-    return False
+    sheet.append_row([
+        nome_arquivo
+    ])
