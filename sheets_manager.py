@@ -135,7 +135,10 @@ def salvar_dataframe(df, aba):
 # REGISTRA IMPORTAÇÃO
 # =========================
 
-def registrar_importacao(nome_arquivo):
+def registrar_importacao(
+    nome_arquivo,
+    hash_arquivo
+):
 
     try:
 
@@ -143,13 +146,58 @@ def registrar_importacao(nome_arquivo):
             "Importacoes"
         )
 
+        # CABEÇALHO
+        if not sheet.get_all_values():
+
+            sheet.append_row([
+                "arquivo",
+                "hash"
+            ])
+
         sheet.append_row([
-            nome_arquivo
+
+            nome_arquivo,
+
+            hash_arquivo
+
         ])
 
     except Exception:
 
         pass
+
+
+# =========================
+# VERIFICA IMPORTAÇÃO
+# =========================
+
+def verificar_importacao(hash_arquivo):
+
+    try:
+
+        sheet = conectar_planilha(
+            "Importacoes"
+        )
+
+        dados = sheet.get_all_records()
+
+        if not dados:
+
+            return False
+
+        hashes = [
+
+            linha.get("hash", "")
+
+            for linha in dados
+
+        ]
+
+        return hash_arquivo in hashes
+
+    except Exception:
+
+        return False
 
 
 # =========================
