@@ -69,9 +69,7 @@ def formatar_brasileiro(df):
         "Valor_Total",
         "Custo_Unitario",
         "Consumo_Medio_Mensal",
-        "Percentual_Valor",
-        "Percentual_Acumulado"
-
+        
     ]
 
     for coluna in colunas_numericas:
