@@ -68,8 +68,8 @@ def formatar_brasileiro(df):
         "Quantidade",
         "Valor_Total",
         "Custo_Unitario",
-        "Consumo_Medio_Mensal",
-        
+        "Consumo_Medio_Mensal"
+
     ]
 
     for coluna in colunas_numericas:
@@ -218,7 +218,7 @@ def ler_base_historica():
     # DATAFRAME
     df = pd.DataFrame(dados)
 
-    # CONVERTE PADRÃO BR → FLOAT
+    # COLUNAS NUMÉRICAS
     colunas_numericas = [
 
         "Quantidade",
@@ -232,17 +232,12 @@ def ler_base_historica():
 
         if coluna in df.columns:
 
+            # CONVERTE VÍRGULA → PONTO
             df[coluna] = (
 
                 df[coluna]
 
                 .astype(str)
-
-                .str.replace(
-                    ".",
-                    "",
-                    regex=False
-                )
 
                 .str.replace(
                     ",",
@@ -252,6 +247,7 @@ def ler_base_historica():
 
             )
 
+            # NUMÉRICO
             df[coluna] = pd.to_numeric(
 
                 df[coluna],

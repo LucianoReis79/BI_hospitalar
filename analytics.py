@@ -6,13 +6,18 @@ import pandas as pd
 def calcular_curva_abc(df):
 
     # =========================
-    # TOTAL DE MESES DA BASE
+    # MESES TOTAIS DA BASE
     # =========================
 
     meses_base = (
         df["Competencia"]
         .nunique()
     )
+
+    # EVITA DIVISÃO POR ZERO
+    if meses_base == 0:
+
+        meses_base = 1
 
     # =========================
     # CONSOLIDA MEDICAMENTOS
@@ -98,6 +103,17 @@ def calcular_curva_abc(df):
 
     )
 
+    # EVITA INFINITO
+    abc["Custo_Unitario"] = (
+
+        abc["Custo_Unitario"]
+
+        .replace([float("inf")], 0)
+
+        .fillna(0)
+
+    )
+
     # =========================
     # ORDENA
     # =========================
@@ -115,6 +131,11 @@ def calcular_curva_abc(df):
     # =========================
 
     total = abc["Valor_Total"].sum()
+
+    # EVITA DIVISÃO POR ZERO
+    if total == 0:
+
+        total = 1
 
     # =========================
     # PERCENTUAL
