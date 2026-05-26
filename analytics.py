@@ -6,7 +6,16 @@ import pandas as pd
 def calcular_curva_abc(df):
 
     # =========================
-    # CONSOLIDA DADOS
+    # TOTAL DE MESES DA BASE
+    # =========================
+
+    meses_base = (
+        df["Competencia"]
+        .nunique()
+    )
+
+    # =========================
+    # CONSOLIDA MEDICAMENTOS
     # =========================
 
     abc = (
@@ -43,7 +52,7 @@ def calcular_curva_abc(df):
         .rename(columns={
 
             "Competencia":
-            "Meses_CMM"
+            "Meses_Com_Consumo"
 
         })
 
@@ -60,6 +69,12 @@ def calcular_curva_abc(df):
     )
 
     # =========================
+    # MESES BASE
+    # =========================
+
+    abc["Meses_Base"] = meses_base
+
+    # =========================
     # CMM
     # =========================
 
@@ -67,7 +82,7 @@ def calcular_curva_abc(df):
 
         abc["Quantidade"]
 
-        / abc["Meses_CMM"]
+        / abc["Meses_Base"]
 
     )
 
@@ -173,11 +188,7 @@ def calcular_curva_abc(df):
 
         "Consumo_Medio_Mensal",
 
-        "Custo_Unitario",
-
-        "Percentual_Valor",
-
-        "Percentual_Acumulado"
+        "Custo_Unitario"
 
     ]
 
@@ -241,7 +252,9 @@ def calcular_curva_abc(df):
 
         "Quantidade",
 
-        "Meses_CMM",
+        "Meses_Base",
+
+        "Meses_Com_Consumo",
 
         "Consumo_Medio_Mensal",
 
